@@ -40,25 +40,30 @@ router.post('/register', async(req, res) => {
 
 router.post('/authenticate', async(req, res) => {
     const { email, password } = req.body;
+    try {
 
-    const user = await User.findOne({ email }).select('+password');
+        const user = await User.findOne({ email }).select('+password');
 
-    if (!user)
-        return res.status(400).send({ error: 'User not found' });
+        if (!user)
+            return res.status(400).send({ error: 'User not found' });
 
-    if (!await bcrypt.compare(password, user.password))
-        return res.status(400).send({ error: 'Invalid password' });
+        if (!await bcrypt.compare(password, user.password))
+            return res.status(400).send({ error: 'Invalid password' });
 
-    user.password = undefined;
+        user.password = undefined;
 
-    const token = jwt.sign({ id: user.id }, authConfig.secret, {
-        expiresIn: 86400,
-    });
+        const token = jwt.sign({ id: user.id }, authConfig.secret, {
+            expiresIn: 86400,
+        });
 
-    res.send({
-        user,
-        token: generateToken({ id: user.id }),
-    });
+        res.send({
+            user,
+            token: generateToken({ id: user.id }),
+        });
+
+    } catch (error) {
+        return res.status(400).send({ error: 'authenticate failed' });
+    }
 });
 
 router.post('/forgot_password', async(req, res) => {
